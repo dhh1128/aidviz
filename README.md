@@ -16,6 +16,17 @@ A diagram produced by this algorithm is called an **entviz**. Entvizes can be ca
 
 Although two entvizes with the same capacity are theoretically equivalent from a data science point of view, they are only visually comparable by an unschooled human if they have the same width and height. It is INVALID to ask a human to compare two entvizes for equality when they have different aspect ratios or different dimensions.
 
+## Analysis
+Each entviz embodies its entropy completely, once, as text. If an entviz is read aloud, taking into account case-sensitivity, all entropy is conveyed.
+
+Each entviz also conveys its entropy eompletely, a second time, via its edges. Each cell has 6 edges that have 4 colors and 4 shapes; 16^6 = 256^3. The shapes are visually distinct from one another even when they are quite small and pixelated.
+
+The colors used with edges are carefully chosen so their differences are perceptible to someone who has color blindness, whether red-green, yellow-blue, or monochromacy. Further, the colors reduce well to a 256-color scheme, retaining their distinctiveness enough to remain distinguishable.
+
+The colors in the nucleus of each cell also convey the entropy completely. However, fine gradations in the colors of the nucleus will not be perceptible to the human eye, and these gradations will disappear if colors are reduced to 256. Therefore, the colors in the nucleus are a hint; they will never be misleading, but they are also not determinative.
+
+The positioning of blank cells acts like a redundant uniqueness comparator on an entviz, allowing viewers to quickly notice a difference even if it's in the middle of a long string. Marking quartile tokens also provides a redundant uniqueness comparator. If strings are serialized with a method that doesn't produce even multiples of 24 bits on character boundaries, the repetition of low-order bits provides additional redundancy in the visualization.
+
 ## Entviz Algorithm
 1. If the input entropy is binary, render it as URL-safe base64 string. If the input entropy is already a string (e.g., base58, base64, or hex), leave it as a string.
 
@@ -35,7 +46,7 @@ Although two entvizes with the same capacity are theoretically equivalent from a
 
     ![grid and cells](entviz-grid-and-cells.png)
 
-1. If *token count* is less than *cell count*, the grid will have blank cells. We want to use blank cells to create visual gaps in a consistent way that is more meaningful than simply putting all the blanks at the beginning or end, because this will aid comparison. Decide which cells will be empty by sorting the tokens in ASCII order (with a secondary sort by their *token index*). Identify the first token in the sorted list that contains the median value. (If the token count is even and no token values are repeated, use the first or smaller median). Call this the **median token**. Insert a blank cell at the *cell index* of the *median token* by incrementing the *cell index* of all tokens with a token index >= the token index of the median token. This essentially shifts these tokens to the right or down. If *token count* + 1 is still less than *cell count*, insert a second blank cell before the final token in the sorted list, again shifting cells that render after. If *token count* + 2 is still less than *cell count*, insert a third blank cell before the first token in the sorted list, again shifting cells that render after.
+1. If *token count* is less than *cell count*, the grid will have blank cells. We want to use blank cells to create visual gaps in a consistent way that is more meaningful than simply putting all the blanks at the beginning or end, because this will aid comparison. Decide which cells will be empty by sorting the tokens in ASCII order (with a secondary sort by their *token index*, in case the same token appears in more than one place). Identify the first token in the sorted list that contains the median value. (If the token count is even and no token values are repeated, use the first or smaller median). Call this the **median token**. Insert a blank cell at the *cell index* of the *median token* by incrementing the *cell index* of all tokens with a token index >= the token index of the median token. This essentially shifts these tokens to the right or down. If *token count* + 1 is still less than *cell count*, insert a second blank cell before the final token in the sorted list, again shifting cells that render after. If *token count* + 2 is still less than *cell count*, insert a third blank cell before the first token in the sorted list, again shifting cells that render after.
 
     ![inserting blank cells](entviz-median-shift.png)
 
@@ -50,6 +61,8 @@ Although two entvizes with the same capacity are theoretically equivalent from a
 1. Draw a white (#ffffff) rectangle with dimensions *grid width* x *grid height*, and call this the **background rect**.
 
 1. On top of the *background rect* render each token into its appropriate cell in the background rect, using the token rendering algorithm below.
+
+1. If there are at least 4 tokens, sort the tokens by the ASCII order of their mirror image (with a secondary sort on the token index, in case the same token appears in more than one place). For example, if a token is "a4W6", its sort key would be "6W4a". Divide the tokens into quartiles and identify the first token in each quartile. Call these the **quartile tokens**. Now draw a black square, of dimensions *edge size* x *edge size*, in a corner of each *quartile token*'s associated cell. For the first quartile token, place the square in the top left. For the second, in the top right. For the third, in the bottom right. For the forth, in the bottom left.  
 
 ## Cell Rendering Algorithm
 
