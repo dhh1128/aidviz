@@ -1,3 +1,11 @@
+Suggestions:
+
+1. put edge shapes in different orientations, or use different shapes altogether (circle, different style of triangle, bar in different places, big triangle in place of big rect, 3 dots).
+2. use different colors or shapes for the quartile marks
+3. stats bar (how many of each color and each shape)
+4. allow toggling on and off the nucleus, the edge shapes, each color
+5. figure out way to glue edges together to make larger shapes (maybe 8 shapes and 2 colors? maybe color of previous always overlaps color of next by 1? Maybe edge has a background color that is not white?)
+
 # entviz
 Entviz is a simple way to visualize values with high entropy -- cryptographic keys, blockchain payment addresses, and so forth -- so a human can compare them visually. The goal is to allow an untrained adult with reasonably good vision to notice differences in two chunks of entropy with little effort.
 
