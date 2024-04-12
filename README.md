@@ -116,9 +116,9 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 
 1. On the canvas, allocate space for a bounding rectangle with dimensions *grid width* x *grid height*, and call this the **bounding rect**. We will assume that the top left corner of the bounding rect is at position (0, 0) on the canvas, but that is not a requirement.
 
-1. Let the array of **possible edge colors** be [white - #ffffff, gold - #ffd966, red - #ffdf2f, blue - #2f3fbf, black - #000000].
+1. Let the array of **possible edge colors** be [white - `#ffffff`, gold - `#ffd966`, red - `#ffdf2f`, blue - `#2f3fbf`, black - `#000000`].
 
-![colors](entviz-colors.png)
+    ![colors](entviz-colors.png)
 
     Select the 2 low-order bits of the 24 bits of entropy from the *median token*. Use this 2-bit number as an index into the *possible edge colors* array to select the background color for the entviz. For example, if the 2-bit number == 1, the background color is gold. Remove the selected color from the array to generate a new array consisting of 4 colors, and call this the **edge colors** array.  
 
