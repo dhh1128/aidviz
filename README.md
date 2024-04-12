@@ -40,6 +40,12 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 
 ![visual CRC](entviz-crc.png)
 
+## Thoughts About Comparing
+* display counts of each shape and each color
+* allow toggling off each channel, each color, each shape, CRC
+* spotcheck by reading a row or column or by having a column / row slider
+* render with a legend for rows and columns
+
 ## Entviz Algorithm
 1. Normalize the input.
     * Remove all whitespace.
