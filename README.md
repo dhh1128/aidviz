@@ -106,8 +106,6 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 
 1. If *token count* is less than *cell count*, the grid will have blank cells. We want to use blank cells to create visual gaps in a consistent way that is more meaningful than simply putting all the blanks at the beginning or end, because this will aid comparison. Insert a blank cell at the *cell index* of the *median token* by incrementing the *cell index* of all tokens with a *token index* >= the *token index* of the *median token*. This essentially shifts these tokens to the right or down in the grid. If *token count* + 1 is still less than *cell count*, insert a second blank cell before the final token in the sorted list, again shifting cells that render after. If *token count* + 2 is still less than *cell count*, insert a third blank cell before the first token in the sorted list, again shifting cells that render after. Do not perform more than 3 shifts.
 
-    ![inserting blank cells](entviz-median-shift.png)
-
 1. Choose a fixed-width font such as Courier, and an appropriate font size for reading. In our example, we will use 12 point, but the algorithm will work at any reasonable font size. The size of the font determines the scale of the entviz.
 
 1. Convert the point size of the font into pixels and call this value the **nucleus height**. Use the formula: pixels = (points * DPI) / 72. Most devices use 96 DPI, although other values are possible. At 96 DPI, a 12-point font = 16 pixels. This is the distance between the font's tallest ascender to its lowest descender, with a line height of 1.0, which allows some extra vertical space. It means that a 12-point font will render nicely, with appropriate extra space, in a rectangle that is 16 pixels high.
