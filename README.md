@@ -18,15 +18,15 @@ The excellent [randomart](http://www.dirk-loss.de/sshvis/drunken_bishop.pdf) alg
 A diagram produced by this algorithm is called an **entviz**. Entvizes can be categorized according to the dimensions of the grid into which they render: a "3x4 entviz", a "5x9 entviz", etc. The maximum expressive **capacity** of an entviz of dimensions NxM is equal to 24 * N * M bits, although slightly less information may be communicated, depending on how the entropy is serialized to text.
 
 ## Guarantees
-Each entviz conveys its entropy fully and independently, in a first visual channel, as text. If the text in an entviz is read aloud, *taking into account case-sensitivity*, all information is transferred. Text is tokenized into cells for efficient and reliable reading, and the cells are organized into a grid. This allows text to be compared by reading forward, backward, up, or down will give the same results.
+Each entviz conveys its entropy fully and independently, in a first visual channel, as text. If the text in an entviz is read aloud, *taking into account case-sensitivity*, all information is transferred. Text is tokenized into cells for efficient and reliable reading, and the cells are organized into a grid.
 
 ![text channel](entviz-text-channel.png)
 
-Each entviz also conveys its entropy fully and independently, in a second visual channel, via the shapes and colors in the edges of its cells. Shapes in edges are carefully chosen to visually distinct from one another even when they are quite small and pixelated. Furthermore, shapes in edges connect to each other to make larger patterns. This allows valid gestalt judgments and minimizes the arbitrary noise that makes QR codes unmemorable for humans.
+Each entviz also conveys its entropy fully and independently, in a second visual channel, via the shapes and colors in the edges of its cells. Shapes in edges are carefully chosen to visually distinct from one another even when they are quite small and pixelated. Shapes in edges sometimes connect to each other to make larger patterns. This allows some valid gestalt judgments and decreases the arbitrary noise that makes QR codes unmemorable for humans.
 
 ![edge channel](entviz-edge-channel.png)
 
-The colors used with edges are selected so their differences are perceptible to someone who has difficulty perceiving colors, and also so they remain quite distinct when rendered in print in grayscale.
+The colors used with edges are selected so their differences are detectable to someone who has difficulty perceiving colors, and also so they remain quite distinct when rendered in print in grayscale.
 
 ![edge channel grayscale](entviz-edge-channel-grayscale.png)
 
@@ -34,7 +34,7 @@ Each entviz conveys its entropy fully and independently, in a third visual chann
 
 ![nucleus color channel](entviz-nucleus-channel.png)
 
-Zero or more cells in an entviz may be blank. The positioning of blank cells derives from the entropy. An entviz also contains small *quartile* marks on four cells or more cells. Blank cells and quartile marks are easily checked by viewers, and act as a sort of visual CRC. They surface differences that may be otherwise hidden in the middle of long strings and at the end of individual tokens.
+Zero or more cells in an entviz may be blank. The positioning of blank cells derives from the entropy. An entviz also contains small *quartile* marks on four cells. Blank cells and quartile marks are easily checked by viewers, and act as a sort of visual CRC. They surface differences that may be otherwise hidden in the middle of long strings and at the end of individual tokens.
 
 ![visual CRC](entviz-crc.png)
 
