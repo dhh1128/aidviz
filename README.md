@@ -129,7 +129,7 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
     Let *array 1* of possible edge shapes be [slant, hammer, pyramid, double bars]
     ![array 1](entviz-edge-shapes-1.png)
 
-    Create a new array called the **edge shapes** array. Now iterate over the low-order 4 bits (bits 0 to 3) of the *quant* of the *second quartile token*. Call the selected bit the **selector** and the index of the bit the **bit index**. If the selector is 0, make the **selected shape array** array 0; otherwise, make it array 1. Copy the shape at *bit index* of *selected shape array* into *edge shapes*. This populates the *edge shapes* array with 4 shapes.
+    Create a new array called the **edge shapes** array. Now iterate over the low-order 4 bits (bits 0 to 3) of the *quant* of the *second quartile token*. Call the selected bit the **selector** and the index of the bit the **bit index**. If the selector is 0, make the **selected shape array** array 0; otherwise, make it array 1. Copy the shape at *bit index* of *selected shape array* into *edge shapes*. This populates the *edge shapes* array with 4 shapes, each of which may come from either source array. 
 
 1. Inside the *bounding rect*, render each token into its appropriate cell in the grid, using the [cell rendering algorithm](#cell-rendering-algorithm) below.
 
@@ -147,9 +147,7 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 
 1. Convert the *quant* for T into 6 4-bit numbers and call these the **edge nums**. Assign the edge numbers an **edge index**, with index 0 for bits 0-3 and index 5 for bits 20-23.
 
-1. Divide the region surrounding the *nucleus rectangle* into 6 **edge rects** &mdash; two above the nucleus, two below, and one on either side. The 4 corners of the *bounding rect* will not be included in any *edge rect*. The *edge rects* above and below the nucleus will have a width of *edge rect length* (=*nucleus width* / 2) and a height of *edge size*. The *edge rects* on either side will have a width of *edge size* and a height of *nucleus height*. Beginning with the top left *edge rect*, and moving clockwise, assign an **edge index** to each *edge rect**.
-
-    ![edges](entviz-edges.png)
+1. Divide the region surrounding the *nucleus rectangle* into 6 **edge rects** &mdash; two above the nucleus, two below, and one on either side. The 4 corners of the *bounding rect* will not be included in any *edge rect*. The *edge rects* above and below the nucleus will have a width of *edge rect length* (=*nucleus width* / 2) and a height of *edge size*. The *edge rects* on either side will have a width of *edge size* and a height of *nucleus height*. Beginning with the top left *edge rect*, and moving clockwise, assign an **edge index** to each *edge rect*.
 
 1. For each *edge num*, use the 2 low-order bits to select a color from the *edge colors* array. Call this the **edge color**.
 
