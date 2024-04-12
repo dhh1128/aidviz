@@ -20,8 +20,6 @@ A diagram produced by this algorithm is called an **entviz**. Entvizes can be ca
 ## Guarantees
 Each entviz conveys its entropy fully and independently, in a first visual channel, as text. If the text in an entviz is read aloud, *taking into account case-sensitivity*, all information is transferred. Text is tokenized into cells for efficient and reliable reading, and the cells are organized into a grid. This allows text to be compared by reading forward, backward, up, or down will give the same results.
 
-    Note: when reading entviz text aloud, the convention is to precede each capital letter with the one-syllable prefix "cap", to read the hyphen character - as "dash", and to read the underscore character as "under". This minimizes the number of syllables while eliminating all ambiguity.
-
 ![text channel](entviz-text-channel.png)
 
 Each entviz also conveys its entropy fully and independently, in a second visual channel, via the shapes and colors in the edges of its cells. Shapes in edges are carefully chosen to visually distinct from one another even when they are quite small and pixelated. Furthermore, shapes in edges connect to each other to make larger patterns. This allows valid gestalt judgments and minimizes the arbitrary noise that makes QR codes unmemorable for humans.
@@ -41,6 +39,9 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 ![visual CRC](entviz-crc.png)
 
 ## Thoughts About Comparing
+
+*Note: when reading entviz text aloud, the convention is to precede each capital letter with the one-syllable prefix "cap", to read the hyphen character - as "dash", and to read the underscore character as "under". This minimizes the number of syllables while eliminating all ambiguity.*
+
 * display counts of each shape and each color
 * allow toggling off each channel, each color, each shape, CRC
 * spotcheck by reading a row or column or by having a column / row slider
