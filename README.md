@@ -1,9 +1,9 @@
 # entviz
-Entviz is a simple way to visualize values with high entropy &mdash; cryptographic keys, UUIDs, blockchain payment addresses, and so forth &mdash; so a human can compare them visually. The goal is to allow an untrained adult with reasonably good vision to easily decide whether two chunks of entropy are the same or different.
+Entviz is a simple way to visualize values with high entropy &mdash; cryptographic keys and signatures, UUIDs, blockchain payment addresses, and so forth &mdash; so a human can compare them visually. The goal is to allow an untrained adult with reasonably good vision to easily decide whether two chunks of entropy are the same or different.
 
-![example entviz](entviz-example.png)
+![example entviz](assets/example.png)
 
-The excellent [randomart](http://www.dirk-loss.de/sshvis/drunken_bishop.pdf) algorithm used with SSH keys has a similar goal, but accepts different constraints and uses a different approach.
+Compare [entmotif](https://dhh1128.github.io/entmotif), which turns entropy into music. The excellent [randomart](http://www.dirk-loss.de/sshvis/drunken_bishop.pdf) algorithm used with SSH keys is also related; it has a similar goal to entviz, but accepts different constraints and uses a different approach.
 
 ## Requirements
 * Work in environments that can draw bitmapped or vector graphics.
@@ -20,23 +20,23 @@ A diagram produced by this algorithm is called an **entviz**. Entvizes can be ca
 ## Guarantees
 Each entviz conveys its entropy fully and independently, in a first visual channel, as text. If the text in an entviz is read aloud, *taking into account case-sensitivity*, all information is transferred. Text is tokenized into cells for efficient and reliable reading, and the cells are organized into a grid.
 
-![text channel](entviz-text-channel.png)
+![text channel](assets/text-channel.png)
 
 Each entviz also conveys its entropy fully and independently, in a second visual channel, via the shapes and colors in the edges of its cells. Shapes in edges are carefully chosen to visually distinct from one another even when they are quite small and pixelated. Shapes in edges sometimes connect to each other to make larger patterns. This allows some valid gestalt judgments and decreases the arbitrary noise that makes QR codes unmemorable for humans.
 
-![edge channel](entviz-edge-channel.png)
+![edge channel](assets/edge-channel.png)
 
 The colors used with edges are selected so their differences are detectable to someone who has difficulty perceiving colors, and also so they remain quite distinct when rendered in print in grayscale.
 
-![edge channel grayscale](entviz-edge-channel-grayscale.png)
+![edge channel grayscale](assets/edge-channel-grayscale.png)
 
 Each entviz conveys its entropy fully and independently, in a third visual channel, via the color that provides the background for the text in each cell. However, fine gradations in the colors of the nucleus may not be perceptible to the human eye, and these gradations will disappear if less than 16 million colors are displayable. Therefore, the colors in the nucleus are a partially redundant hint; they will never be misleading, but they should not be a primary comparison method.
 
-![nucleus color channel](entviz-nucleus-channel.png)
+![nucleus color channel](assets/nucleus-channel.png)
 
 Zero or more cells in an entviz may be blank. The positioning of blank cells derives from the entropy. An entviz also contains small *quartile* marks on four cells. Blank cells and quartile marks are easily checked by viewers, and act as a sort of visual CRC. They surface differences that may be otherwise hidden in the middle of long strings and at the end of individual tokens.
 
-![visual CRC](entviz-crc.png)
+![visual CRC](assets/crc.png)
 
 ## Thoughts About Comparing
 
@@ -56,7 +56,7 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 
 1. Split the string into tokens, such that each token represents 3 bytes (24 bits) of binary entropy &mdash; or as close to that amount as possible on even character boundaries. For base64 and base58 strings, token length = 4. For hex, token length = 6. Call the number of tokens the **token count**. Assign to each token a **token index** between 0 and *token count* - 1, inclusive.
 
-    ![split string into tokens](entviz-tokens.png)
+    ![split string into tokens](assets/tokens.png)
 
     Also, if the token represents less than 24 bits of entropy, extend the bits of the token by repeating low-order bits until a full 24 bits is used. Call the 24-bit value associated with the token its **quant**.
 
@@ -66,11 +66,11 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 
     >Using more entropy than the example we've been building, just to show how this works in more complicated situations: 256 bits of entropy is 44 base-64 characters or 11 tokens. 11 tokens can be rendered as a grid with 11 columns and 1 row (aspect ratio 22:1), 6 columns and 2 rows (rounding *token count* to 12; aspect ratio 12:2), 4 columns and 3 rows (8:3), 3 columns and 4 rows (6:4), 2 columns and 6 rows (4:6), or 1 column and 11 rows (2:11). Given a *target aspect ratio* of 1:1, the grid layout with an aspect ratio closes to 1:1 but not less than 1:1 is the one with 3 columns and 4 rows, aspect ratio 6:4.
 
-    ![grid options](entviz-grid-options.png)
+    ![grid options](assets/grid-options.png)
 
 1. Moving from left to right and top to bottom &mdash; which is how ASCII text should read if it wraps &mdash; number the cells from 0 to N, and call the number associated with each cell its **cell index**. Assign a *cell index* to each token. Unless changed, the *cell index* of a token will equal its *token index*.
 
-    ![grid and cells](entviz-grid-and-cells.png)
+    ![grid and cells](assets/grid-and-cells.png)
 
 1. Sort the tokens in ASCII order (with a secondary sort by their *token index*, in case the same token appears in more than one place). Identify the first token in the sorted list that contains the median value. (If the token count is even, use the first token from the middle pair.) Call this the **median token**.
 
@@ -112,28 +112,30 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 
 1. Calculate the **cell width** by multiplying *nucleus height* by 4, and calculate **cell height** by multiplying *nucleus height* by 2. Calculate the **grid width** by multiplying *cell width* by number of columns, and **grid height** by multiplying *cell height* by number of rows. Calculate the **nucleus width** by multiplying *nucleus height* by 3. Calculate the **edge size** by dividing *nucleus height* by 2. Calculate the **edge rect length** by dividing **nucleus width** by 2.
 
-    ![basic measurements for cell and grid](entviz-cell-layout.png)
+    ![basic measurements for cell and grid](assets/cell-layout.png)
 
-1. On the canvas, allocate space for a bounding rectangle with dimensions *grid width* x *grid height*, and call this the **bounding rect**. We will assume that the top left corner of the bounding rect is at position (0, 0) on the canvas, but that is not a requirement.
+1. On the canvas, allocate space for a bounding rectangle with dimensions *grid width* x *grid height*, and call this the **bounding rect** for the entviz. We will assume that the top left corner of the bounding rect is at position (0, 0) on the canvas, but that is not a requirement.
 
 1. Let the array of **possible edge colors** be [white - `#ffffff`, gold - `#ffd966`, red - `#ffdf2f`, blue - `#2f3fbf`, black - `#000000`].
 
-    ![colors](entviz-colors.png)
+    ![colors](assets/colors.png)
 
     Select the 2 low-order bits of the 24 bits of entropy from the *median token*. Use this 2-bit number as an index into the *possible edge colors* array to select the background color for the entviz. For example, if the 2-bit number == 1, the background color is gold. Remove the selected color from the array to generate a new array consisting of 4 colors, and call this the **edge colors** array.  
 
 1. Let *array 0* of possible edge shapes be [triangle, hook, rect, box]:
 
-    ![array 0](entviz-edge-shapes-0.png)
+    ![array 0](assets/edge-shapes-0.png)
 
     Let *array 1* of possible edge shapes be [slant, hammer, pyramid, double bars]
-    ![array 1](entviz-edge-shapes-1.png)
+    ![array 1](assets/edge-shapes-1.png)
 
     Create a new array called the **edge shapes** array. Now iterate over the low-order 4 bits (bits 0 to 3) of the *quant* of the *second quartile token*. Call the selected bit the **selector** and the index of the bit the **bit index**. If the selector is 0, make the **selected shape array** array 0; otherwise, make it array 1. Copy the shape at *bit index* of *selected shape array* into *edge shapes*. This populates the *edge shapes* array with 4 shapes, each of which may come from either source array. 
 
-1. Inside the *bounding rect*, render each token into its appropriate cell in the grid, using the [cell rendering algorithm](#cell-rendering-algorithm) below.
+1. Define two integers, **shape shift** and **color shift**, and set both of their values to 0.
 
-1. Draw a circle of diameter *edge size* in a corner of each *quartile token*'s associated cell. For the first quartile token, place the circle in the top left, and use the first item in the *edge colors* array as its fill color. For the second, place the circle in the top right, using the second edge color. For the third, place the circle in the bottom right, using the third edge color. For the fourth, in the bottom left, using the fourth edge color.  
+1. Inside the *bounding rect*, render each token T into its appropriate cell in the grid, using *edge colors*, *edge shapes*, *shape shift* and *color shift*, according to the [cell rendering algorithm](#cell-rendering-algorithm) below.
+
+1. Draw a circle with diameter = *edge size* / 2, centered vertically and horizontally, in a corner of each *quartile token*'s associated cell. For the first quartile token, place the circle in the top left corner of the cell, and use the first item in the *edge colors* array as its fill color. For the second, place the circle in the top right, using the second edge color. For the third, place the circle in the bottom right, using the third edge color. For the fourth, in the bottom left, using the fourth edge color.  
 
 ## Cell Rendering Algorithm
 
@@ -145,12 +147,12 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 
 1. Using the *foreground color*, write the text of the token on top of the *nucleus rectangle*, centering it vertically and horizontally.
 
-1. Convert the *quant* for T into 6 4-bit numbers and call these the **edge nums**. Assign the edge numbers an **edge index**, with index 0 for bits 0-3 and index 5 for bits 20-23.
+1. Convert the *quant* for T into 6 4-bit numbers and call these the **edge nums**. Assign the edge numbers an **edge index**, with index 0 for bits 0-3 and continuing up to index 5 for bits 20-23.
 
-1. Divide the region surrounding the *nucleus rectangle* into 6 **edge rects** &mdash; two above the nucleus, two below, and one on either side. The 4 corners of the *bounding rect* will not be included in any *edge rect*. The *edge rects* above and below the nucleus will have a width of *edge rect length* (=*nucleus width* / 2) and a height of *edge size*. The *edge rects* on either side will have a width of *edge size* and a height of *nucleus height*. Beginning with the top left *edge rect*, and moving clockwise, assign an **edge index** to each *edge rect*.
+1. Divide the region surrounding the *nucleus rectangle* into 6 **edge rects** &mdash; two above the nucleus, two below, and one on either side. The 4 corners of the cell will not be included in any *edge rect*. The *edge rects* above and below the nucleus will have a width of *edge rect length* (=*nucleus width* / 2) and a height of *edge size*. The *edge rects* on either side will have a width of *edge size* and a height of *nucleus height*. Beginning with the top left *edge rect*, and moving clockwise, assign an **edge index** to each *edge rect*.
 
-1. For each *edge num*, use the 2 low-order bits to select a color from the *edge colors* array. Call this the **edge color**.
+1. For each *edge num*, select the 2 low-order bits and call this the **color base**. XOR the *color base* with the 2 low-order bits of the *color shift* and call the result the **color index**. Select a color from the *edge colors* array using the *color index*, and call it the **edge color**. Increment *color shift* by 1. If (T.*cell index* mod *column count*) == *column count* - 1, add *shape shift* to *color shift*.
 
-1. For each *edge num*, use the 2 high-order bits as an index to select a shape from the *edge shapes* array. Call this the **edge shape**.
+1. For each *edge num*, select the 2 high-order bits and call this the **shape base**. XOR the *shape base* with the 2 low-order bits of the *shape shift* and call the result the **shape index**. Select a shape from the *edge shapes* array using the *shape index*, and call it the **edge shape**. If (T.*cell index* mod *column count*) != *column count* - 1, increment *shape shift* by 1.   
 
 1. Inside the logical region belonging to each *edge rect*, draw the *edge shape* using the *edge color* as a fill color. All triangles are 45&deg;x45&deg;x90&deg;. Shapes are considered standard in edge 0 and edge 1. They rotate 90&deg; (and, in some cases, compress) for edge 2. They rotate 180&deg; from standard in edges 3 and 4. They rotate 270&deg; from standard (and, in some cases, compress) for edge 5. The shape diagrams above show the dimensions and orientations of each shape.
