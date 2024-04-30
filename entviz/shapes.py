@@ -23,14 +23,3 @@ def right_triangle(svg, where, rotation: int, fill_color: str="red"):
     else:
         raise ValueError("Rotation degree must be 0, 90, 180, or 270")
     return etree.SubElement(svg, 'polygon', points=points, fill=fill_color)
-
-if __name__ == '__main__':
-    from layout import Rect, Point, Size
-    svg = canvas(Size(500, 500))
-    rect(svg, Rect(Point(400, 100), Size(100, 300)), "yellow")
-    circle(svg, Rect(Point(100, 400), Size(50, 50)), "pink")
-    right_triangle(svg, Rect(Point(250, 250), Size(100, 100)), 0, 'purple')
-    
-    with open('shapes.svg', 'wb') as f:
-        f.write(etree.tostring(etree.ElementTree(svg), encoding='utf-8', xml_declaration=True))
-        print('saved')
