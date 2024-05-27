@@ -3,10 +3,10 @@ import re
 
 ASPECT_RATIO_PAT = re.compile(r'(\d+):(\d+)')
 
-def viz(entropy, ar_width, ar_height, fontsize):
+def visualize(entropy, ar_width, ar_height, fontsize):
     print(f'Entropy: {entropy}')
-    print(f'Width: {width}')
-    print(f'Height: {height}')
+    print(f'Width: {ar_width}')
+    print(f'Height: {ar_height}')
 
 def main():
     parser = ArgumentParser(
@@ -29,7 +29,7 @@ def main():
         if fontsize < 6 or fontsize > 30:
             parser.error('Invalid font size.')
     try:
-        viz(args.entropy, ar_width, ar_height, fontsize)
+        visualize(args.entropy, ar_width, ar_height, fontsize)
     except:
         import sys, traceback
         traceback.print_exc()
