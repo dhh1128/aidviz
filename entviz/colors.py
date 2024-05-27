@@ -1,6 +1,9 @@
-def luminance(rgb):
+def relative_luminance(rgb):
     """
-    Calculate the gamma-corrected luminance of an RGB color value.
+    Calculate the gamma-corrected luminance of an RGB color value. This is the luminance value
+    used for accessibility purposes in web design, to ensure that text is readable against a
+    background color. The luminance value is a number between 0 and 1, where 0 is black and 1 is
+    white. See https://www.w3.org/WAI/GL/wiki/Relative_luminance.
     
     The simple method of getting luminance is just to assume that however much red, green, and blue
     we see, that's how much luminance we have. This does not account for the fact that the human eye
@@ -16,7 +19,7 @@ def luminance(rgb):
     bs = rgb[2] / 255
 
     def gamma_correction(c):
-        if c <= 0.03928:
+        if c <= 0.04045:
             return c / 12.92
         else:
             return ((c + 0.055) / 1.055) ** 2.4
@@ -25,10 +28,5 @@ def luminance(rgb):
     gs_gamma = gamma_correction(gs)
     bs_gamma = gamma_correction(bs)
 
-    L = (0.2126 * rs_gamma) + (0.7152 * gs_gamma) + (0.0722 * bs_gamma)
-    return L
-
-# Example usage:
-rgb_color = (128, 200, 50)  # Example RGB color, change it to your desired color
-luminance_value = luminance(rgb_color)
-print("Relative luminance:", luminance_value)
+    Y = (0.2126 * rs_gamma) + (0.7152 * gs_gamma) + (0.0722 * bs_gamma)
+    return Y

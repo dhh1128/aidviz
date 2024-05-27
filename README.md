@@ -14,6 +14,10 @@ Compare [entmotif](https://dhh1128.github.io/entmotif), which turns entropy into
 * Be usable by people with red-green, blue-yellow, and complete color blindness.
 * Be trivial to implement correctly, with no significant dependencies.
 
+## Nonrequirements
+* Make it easy to remember all the details in a visualization. (Remembering a few arbitrarily chosen features of an entviz should be easy, but remembering all its details is unrealistic. The more appropriate goal is easy comparison to a saved copy.)
+* Work in pure text environments. (Few pure text environments exist; even linux shells can save a file for viewing in a browser. Use randomart or invent a variation on this algorithm instead.)
+
 ## Concepts
 A diagram produced by this algorithm is called an **entviz**. Entvizes can be categorized according to the dimensions of the grid into which they render: a "3x4 entviz", a "5x9 entviz", etc. The maximum expressive **capacity** of an entviz of dimensions NxM is equal to 24 * N * M bits, although slightly less information may be communicated, depending on how the entropy is serialized to text.
 
