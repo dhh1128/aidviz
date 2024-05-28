@@ -141,6 +141,16 @@ def test_hex_normalization():
         assert answer.prefix == prefix
         assert answer.core == core.upper()
 
+def test_stellar_normalization():
+    for input in [
+        "GDFW2Z2IWGRJAJH5UNZ5B4PL5JY2X2BTHXVD5J7P64ICBRQJXP6VXABM",
+        "gdfw2z2iwgrjajh5unz5b4pl5jy2x2bthxvd5j7p64icbrqjxp6vxabm",
+        ]:
+        answer = parse(input)
+        assert answer.prefix == 'G'
+        assert answer.core == "DFW2Z2IWGRJAJH5UNZ5B4PL5JY2X2BTHXVD5J7P64ICBRQJXP6VXABM"
+        assert answer.type == "Stellar"
+
 def test_hex_multihash_normalization():
     for input in [
         hexified_multihash.lower(),

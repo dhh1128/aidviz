@@ -11,10 +11,10 @@ BASE58_CHECK_LENGTH = 25  # Expected length of Base58Check encoded Bitcoin addre
 
 UUID_REGEX = re.compile(r'^\{?[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}\}?$', re.I)
 DID_REGEX = re.compile(r'^(did:[a-z0-9]+:)((?:[a-zA-Z0-9_.-]|%[a-fA-F0-9]{2})+)((/[^?]*)?([?].*)?)$')
-STELLAR_REGEX = re.compile(r'^(G)([' + BASE32_ALPHABET_EITHER_CASE + ']{55})$')
+STELLAR_REGEX = re.compile(r'^(G|g)([' + BASE32_ALPHABET_EITHER_CASE + ']{55})$')
 IPFS_CIDV0_REGEX = re.compile(r'^(Qm)([' + BASE58_ALPHABET + ']{44})$')
 IPFS_CIDV1_REGEX = re.compile(r'^(b)([' + BASE32_ALPHABET_EITHER_CASE + ']{58,112})$')
-EOS_REGEX = re.compile(r'^[a-z1-5.]{1,12}$')
+EOS_REGEX = re.compile(r"(^[a-z1-5.]{1,11}[a-z1-5]$)|(^[a-z1-5.]{12}[a-j1-5]$)")
 CARDANO_SHORT_BYRON_REGEX = re.compile(r'^(Ae2)([' + BASE58_ALPHABET + ']{50})([' + BASE58_ALPHABET + ']{6})$')
 CARDANO_LONG_BYRON_REGEX = re.compile(r'^(DdzFF)([' + BASE58_ALPHABET + ']{65})([' + BASE58_ALPHABET + ']{6})$')
 CARDANO_SHELLEY_REGEX = re.compile(r'^((?:addr|stake)(?:_test)?)(1[' + BASE32_ALPHABET_EITHER_CASE + ']{50,100})([' + BASE32_ALPHABET_EITHER_CASE + ']{6})$')
@@ -193,7 +193,7 @@ def parse_bitcoin_address(text) -> Parsed:
         return Parsed("Bitcoin legacy", m.group(1), m.group(2), m.group(3))
     m = BITCOIN_SEGWIT_REGEX.match(text)
     if m:
-        return Parsed("Bitcoin SegWit", m.group(1), m.group(2), None)
+        return Parsed("Bitcoin SegWit", m.group(1).lower(), m.group(2).lower(), None)
 
 def parse_ripple_address(text) -> Parsed:
     """
@@ -265,7 +265,7 @@ def parse_cardano_address(text) -> Parsed:
         return Parsed("Cardano Byron", m.group(1), m.group(2), m.group(3))
     m = CARDANO_SHELLEY_REGEX.match(text)
     if m:
-        return Parsed("Cardano Shelley", m.group(1), m.group(2), m.group(3))
+        return Parsed("Cardano Shelley", m.group(1), m.group(2).lower(), m.group(3).lower())
 
 def parse_eos_address(text) -> Parsed:
     """
@@ -283,7 +283,7 @@ def parse_stellar_address(text) -> Parsed:
     """
     m = STELLAR_REGEX.match(text)
     if m:
-        return Parsed("Stellar", m.group(1), m.group(2), None)
+        return Parsed("Stellar", m.group(1).upper(), m.group(2).upper(), None)
     
 def parse_uuid(text) -> Parsed:
     """
@@ -314,7 +314,7 @@ def parse_ipfs_cid(text) -> Parsed:
         return Parsed("IPFS CID v0", m.group(1), m.group(2), None)
     m = IPFS_CIDV1_REGEX.match(text)
     if m:
-        return Parsed(f"IPFS CID v1 256", m.group(1), m.group(2), None)
+        return Parsed(f"IPFS CID v1 256", m.group(1), m.group(2).lower(), None)
     
 # Register all the functions that do parsing (with one exception below).
 def register_parse_funcs():
