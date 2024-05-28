@@ -1,5 +1,6 @@
 import collections
 import re
+import hashlib
 
 Parsed = collections.namedtuple('Parsed', ['type', 'prefix', 'core', 'suffix'])
 
@@ -20,24 +21,181 @@ CARDANO_SHELLEY_REGEX = re.compile(r'^((?:addr|stake)(?:_test)?)(1[' + BASE32_AL
 BITCOIN_CASH_REGEX = re.compile(r'^((?:bitcoincash|bchtest):)?([pq][' + BASE32_ALPHABET + ']{41})', re.I)
 LITECOIN_LEGACY_REGEX = re.compile(r'^(t?L)([' + BASE58_ALPHABET + ']{33})$')
 LITECOIN_REGEX = re.compile(r'^(ltc)([' + BASE58_ALPHABET + ']{42,62})$')
-ETHEREUM_REGEX = re.compile(r'^(0x)([a-fA-F0-9]{32})([a-fA-F0-9]{8})$')
+ETHEREUM_REGEX = re.compile(r'^(0x)?([a-fA-F0-9]{32})([a-fA-F0-9]{8})$')
 RIPPLE_REGEX = re.compile(r'^(r)([' + BASE58_ALPHABET + ']{33})$')
 BITCOIN_LEGACY_REGEX = re.compile(r'^([123mn])([' + BASE58_ALPHABET + ']{21,30})([' + BASE58_ALPHABET + ']{4})$')
 BITCOIN_SEGWIT_REGEX = re.compile(r'^(bc1|tb1)([' + BASE32_ALPHABET_EITHER_CASE + ']{39,69})$', re.I)
+SSH_KEY_REGEX = re.compile(r'(AAAA)([0-9A-Za-z+/]+={0,3})')
+HEX_REGEX = re.compile(r'^[a-fA-F0-9]+$')
+BASE64URL_NO_PAD_REGEX = re.compile(r'^[A-Za-z0-9-_]+$') # used by CESR
+BASE64URL_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 
-def parse_bitcoin_address(address):
+MULTIHASH_HASH_FUNCS = {
+    0x11: "sha1",
+    0x12: "sha2-256",
+    0x13: "sha2-512",
+    0x14: "sha3-224",
+    0x15: "sha3-256",
+    0x16: "sha3-384",
+    0x17: "sha3-512",
+    0x18: "shake-128",
+    0x19: "shake-256",
+    0x1a: "keccak-224",
+    0x1b: "keccak-256",
+    0x1c: "keccak-384",
+    0x1d: "keccak-512",
+    0x22: "blake2b-8",
+    0x23: "blake2b-16",
+    0x24: "blake2b-24",
+    0x25: "blake2b-32",
+    0x26: "blake2b-40",
+    0x27: "blake2b-48",
+    0x28: "blake2b-56",
+    0x29: "blake2b-64",
+    0x2a: "blake2b-72",
+    0x2b: "blake2b-80",
+    0x2c: "blake2b-88",
+    0x2d: "blake2b-96",
+    0x2e: "blake2b-104",
+    0x2f: "blake2b-112",
+    0x30: "blake2b-120",
+    0x31: "blake2b-128",
+    0x32: "blake2b-136",
+    0x33: "blake2b-144",
+    0x34: "blake2b-152",
+    0x35: "blake2b-160",
+    0x36: "blake2b-168",
+    0x37: "blake2b-176",
+    0x38: "blake2b-184",
+    0x39: "blake2b-192",
+    0x3a: "blake2b-200",
+    0x3b: "blake2b-208",
+    0x3c: "blake2b-216",
+    0x3d: "blake2b-224",
+    0x3e: "blake2b-232",
+    0x3f: "blake2b-240",
+    0x40: "blake2b-248",
+    0x41: "blake2b-256",
+    0xb201: "dbl-sha2-256",
+    0xb202: "murmur3-128",
+    0xb203: "murmur3-32"
+}
+
+def _parse_multihash(text):
+    """
+    See if we can parse text as a Multihash.
+    If yes, return Parsed("multihash...", prefix (2 bytes), body, None).
+    """
+    if text and len(text) >= 3:
+        hash_func = MULTIHASH_HASH_FUNCS.get(text[0])
+        if hash_func:
+            hash_length = int(text[1])
+            if len(text) == hash_length + 2:
+                return Parsed(f"multihash {hash_func}", text[0:2], text[2:], None)
+
+def parse_hex_multihash(text) -> Parsed:
+    """
+    See if we can parse text as a hex-encoded Multihash.
+    If yes, return Parsed("hex multihash...", prefix (2 bytes), body, None).
+    """
+    if text and len(text) >= 6:
+        m = HEX_REGEX.match(text)
+        if m: 
+            answer = _parse_multihash(bytes.fromhex(text))
+            if answer:
+                return Parsed(f"hex {answer.type}", bytes.hex(answer.prefix).lower(), bytes.hex(answer.core).lower(), None)
+            
+CESR_1_BYTE_CODES = [
+    ("A", "Ed25519 seed", 44),
+    ("B", "Ed25519 nt pubkey", 44),
+    ("C", "X25519 pub enckey", 44),
+    ("D", "Ed25519 pubkey", 44),
+    ("E", "Blake3-256", 44),
+    ("F", "Blake2b-256", 44),
+    ("G", "Blake2s-256", 44),
+    ("H", "SHA3-256", 44),
+    ("I", "SHA2-256", 44),
+    ("J", "secp256k1 seed", 44),
+    ("K", "Ed448 seed", 76),
+    ("L", "X448 pub enckey", 76),
+    ("O", "X25519 priv deckey", 44),
+    ("P", "X25519 124 cipher 44 seed", 124),
+    ("Q", "secp256r1 seed", 44),
+    ("Z", "blinding factor", 44),
+]
+CESR_1_BYTE_LENGTHS = set([x[2] for x in CESR_1_BYTE_CODES])
+
+CESR_2_BYTE_CODES = [
+    ("0A", "random 128-bit number", 24),
+    ("0B", "Ed25519 sig", 88),
+    ("0C", "secp256k1 sig", 88),
+    ("0D", "Blake3-512", 88),
+    ("0E", "Blake2b-512", 88),
+    ("0F", "SHA3-512", 88),
+    ("0G", "SHA2-512", 88),
+    ("0I", "secp256r1 sig", 88),
+]
+CESR_2_BYTE_LENGTHS = set([x[2] for x in CESR_2_BYTE_CODES])
+
+CESR_4_BYTE_CODES = [
+    ("1AAA", "secp256k1 nt pubkey", 48),
+    ("1AAB", "secp256k1 pubkey", 48),
+    ("1AAC", "Ed448 nt pubkey", 80),
+    ("1AAD", "Ed448 pubkey", 80),
+    ("1AAE", "Ed448 sig", 156),
+    ("1AAH", "X25519 100 cipher 24 salt", 100),
+    ("1AAI", "secp256r1 nt pubkey", 48),
+    ("1AAJ", "secp256r1 pubkey", 48),
+]
+CESR_4_BYTE_LENGTHS = set([x[2] for x in CESR_4_BYTE_CODES])
+
+            
+def parse_cesr(text) -> Parsed:
+    """
+    See if we can parse text as a CESR.
+    If yes, return Parsed("CESR...", prefix, body, None).
+    """
+    items = None
+    len_text = len(text)
+    if text:
+        code = text[0]
+        if code == '0':
+            if len_text in CESR_2_BYTE_LENGTHS:
+                items = CESR_2_BYTE_CODES
+        elif code == '1':
+            if len_text in CESR_4_BYTE_LENGTHS:
+                items = CESR_4_BYTE_CODES
+        else:
+            if len_text in CESR_1_BYTE_LENGTHS:
+                items = CESR_1_BYTE_CODES
+        if items:
+            for item in items:
+                if text.startswith(item[0]) and len_text == item[2]:
+                    if BASE64URL_NO_PAD_REGEX.match(text):
+                        return Parsed(f"CESR {item[1]}", item[0], text[len(item[0]):], None)
+
+def parse_ssh_key(text) -> Parsed:
+    """
+    See if we can parse text as an SSH key.
+    If yes, return Parsed("SSH", "AAAA", body, None).
+    """
+    m = SSH_KEY_REGEX.match(text)
+    if m:
+        return Parsed(f"SSH key", m.group(1), m.group(2), None)
+
+def parse_bitcoin_address(text) -> Parsed:
     """
     See if we can parse text as a Bitcoin address.
     If yes, return Parsed("bitcoin", prefix, body, None).
     """
-    m = BITCOIN_LEGACY_REGEX.match(address)
+    m = BITCOIN_LEGACY_REGEX.match(text)
     if m:
         return Parsed("Bitcoin legacy", m.group(1), m.group(2), m.group(3))
-    m = BITCOIN_SEGWIT_REGEX.match(address)
+    m = BITCOIN_SEGWIT_REGEX.match(text)
     if m:
         return Parsed("Bitcoin SegWit", m.group(1), m.group(2), None)
 
-def parse_ripple_address(text):
+def parse_ripple_address(text) -> Parsed:
     """
     See if we can parse text as a Ripple address.
     If yes, return Parsed("Ripple", prefix, body, None).
@@ -46,16 +204,34 @@ def parse_ripple_address(text):
     if m:
         return Parsed("Ripple", m.group(1), m.group(2), None)
 
-def parse_ethereum_address(text):
+def to_EIP55_address(address: str) -> str:
+    # Remove the '0x' prefix if present
+    address = address.lower().replace('0x', '')
+    
+    # Create a keccak-256 hash of the address
+    hash = hashlib.sha3_256(address.encode('utf-8')).hexdigest()
+    
+    # Apply the checksum
+    checksum_address = '0x'
+    for i, char in enumerate(address):
+        if int(hash[i], 16) >= 8:
+            checksum_address += char.upper()
+        else:
+            checksum_address += char.lower()
+    
+    return checksum_address
+
+def parse_ethereum_address(text) -> Parsed:
     """
     See if we can parse text as an Ethereum address.
-    If yes, return Parsed("Ethereum", prefix, body, None).
+    If yes, return Parsed("Ethereum", "0x", core, checksum).
     """
     m = ETHEREUM_REGEX.match(text)
     if m:
-        return Parsed("Ethereum", m.group(1), m.group(2), m.group(3))
+        eip55_format = to_EIP55_address(m.group(2) + m.group(3))
+        return Parsed("Ethereum", "0x", eip55_format[2:-8], eip55_format[-8:])
 
-def parse_litecoin_address(text):
+def parse_litecoin_address(text) -> Parsed:
     """
     See if we can parse text as a Litecoin address.
     If yes, return Parsed("Litecoin...", prefix, body, None).
@@ -67,7 +243,7 @@ def parse_litecoin_address(text):
     if m:
         return Parsed("Litecoin", m.group(1), m.group(2), None)
 
-def parse_bitcoin_cash_address(text):
+def parse_bitcoin_cash_address(text) -> Parsed:
     """
     See if we can parse text as a Bitcoin cash address.
     If yes, return Parsed("Bitcoin cash", prefix, body, None).
@@ -76,7 +252,7 @@ def parse_bitcoin_cash_address(text):
     if m:
         return Parsed("Bitcoin Cash", m.group(1), m.group(2), None)
 
-def parse_cardano_address(text):
+def parse_cardano_address(text) -> Parsed:
     """
     See if we can parse text as a Cardano address.
     If yes, return Parsed("Cardano...", prefix ("addr", "stake", etc.), body, checksum).
@@ -91,7 +267,7 @@ def parse_cardano_address(text):
     if m:
         return Parsed("Cardano Shelley", m.group(1), m.group(2), m.group(3))
 
-def parse_eos_address(text):
+def parse_eos_address(text) -> Parsed:
     """
     See if we can parse text as an EOS address.
     If yes, return Parsed("EOS", None, body (address), None).
@@ -100,7 +276,7 @@ def parse_eos_address(text):
     if m:
         return Parsed("EOS", None, m.group(0), None)
 
-def parse_stellar_address(text):
+def parse_stellar_address(text) -> Parsed:
     """
     See if we can parse text as a Stellar address.
     If yes, return prefix (G), body (rest of address), and suffix (empty).
@@ -109,7 +285,7 @@ def parse_stellar_address(text):
     if m:
         return Parsed("Stellar", m.group(1), m.group(2), None)
     
-def parse_uuid(text):
+def parse_uuid(text) -> Parsed:
     """
     See if we can parse text as a UUID.
     If yes, return Parsed("UUID", prefix (None), body (lower-case UUID sans punct), suffix (None)).
@@ -128,7 +304,7 @@ def parse_did(text) -> Parsed:
     if m:
         return Parsed("DID", m.group(1), m.group(2), m.group(3))
     
-def parse_ipfs_cid(text):
+def parse_ipfs_cid(text) -> Parsed:
     """
     See if we can parse text as an IPFS CID.
     If yes, return Parsed("IPFS CID...", prefix (Qm or b), body, None)
@@ -139,7 +315,8 @@ def parse_ipfs_cid(text):
     m = IPFS_CIDV1_REGEX.match(text)
     if m:
         return Parsed(f"IPFS CID v1 256", m.group(1), m.group(2), None)
-
+    
+# Register all the functions that do parsing (with one exception below).
 def register_parse_funcs():
     g = globals()
     parse_funcs = []
@@ -150,8 +327,34 @@ def register_parse_funcs():
 parse_funcs = register_parse_funcs()
 del register_parse_funcs
 
-def normalize(entropy: str):
+def parse_hex(text) -> Parsed:
+    """
+    See if we can parse text as a hex string.
+    If yes, return Parsed("hex", prefix (either None or "0x"), body, None).
+    """
+    if text:
+        prefix = None
+        if (text.startswith('0x') or text.startswith('0X')) and len(text) > 2:
+            prefix = "0x"
+            text = text[2:]
+        elif len(text) % 2 != 0: return 
+        m = HEX_REGEX.match(text)
+        if m:
+            return Parsed("hex", prefix, text.upper(), None)
+
+# We put parse_hex at the end so it won't be attempted until after
+# we try many other parsers -- especially the Ethereum one, which
+# starts with "0x" and consists of pure hex, and the hex_multihash
+# one, which is also pure hex.
+parse_funcs.append(parse_hex)
+
+def parse(entropy: str) -> Parsed:
+    """
+    See if the entropy can be parsed as a known type. If yes,
+    return a Parsed tuple. If no, return None.
+    """
     entropy = entropy.strip()
-    if UUID_REGEX.match(entropy):
-        return entropy.lower().replace('-', '').replace('{', '').replace('}', '')
-    
+    for func in parse_funcs:
+        answer = func(entropy)
+        if answer:
+            return answer    
