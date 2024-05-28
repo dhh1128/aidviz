@@ -54,9 +54,8 @@ Zero or more cells in an entviz may be blank. The positioning of blank cells der
 ## Entviz Algorithm
 1. Normalize the input.
     * Remove all whitespace.
-    * If the entropy is known to be a UUID, either in binary or text form, render it as a pure hex string, without braces or hyphens, and convert the string to lower case.
-    * If the input entropy is a string that is not a UUID (e.g., base58, base64, or hex), strip off any prefixes that are not typically compared (e.g., remove "0x" as a prefix for hex). Also, if the particular type of string is known to be case-insensitive, convert the string to lower case.
-    * If the input entropy is an arbitrary bag of bits, render it as URL-safe base64 string.
+    * Detect the entropy type, if possible, and split the input into prefix, core, and suffix, with all three pieces of data normalized. This should eliminate case differences, putting the entropy in canonical case, with canonical punctuation. It should identify prefixes that are not true entropy (e.g., the "0x" prefix on an Ethereum address, the "AAAA" at the front of an SSH key, etc.). It should identify suffixes that are checksums or derivations of the true entropy. The reference implementation in python has an `entropy` module with a `parse(txt)` method that can be used as an oracle, and it has unit tests that can provide a test vector.
+    * If the input entropy has an unrecognized type, treat it as an arbitrary bag of bits, and render it as URL-safe base64 string.
 
 1. Split the string into tokens, such that each token represents 3 bytes (24 bits) of binary entropy &mdash; or as close to that amount as possible on even character boundaries. For base64 and base58 strings, token length = 4. For hex, token length = 6. Call the number of tokens the **token count**. Assign to each token a **token index** between 0 and *token count* - 1, inclusive.
 
